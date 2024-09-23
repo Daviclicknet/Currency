@@ -1,13 +1,12 @@
 import customtkinter as ctk
 import requests
-from tkinter import messagebox
 from dotenv import load_dotenv
 from typing import List
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import datetime
 import matplotlib
-import numpy as np  # Importado para suavização do gráfico
+import numpy as np
 import os
 
 matplotlib.use('TkAgg')
@@ -31,10 +30,31 @@ def update_exchange_rate(base_currency: str, target_currency: str) -> dict:
 # Variáveis para o gráfico em tempo real
 rates = []
 timestamps = []
+update_timer = None  # Para controlar o timer da atualização
 
-# Função modificada com suavização do gráfico
-def update_real_time_graph(base_currency='USD'):
-    target_currency = 'BRL'
+def plot_graph():
+    # Suavização dos dados da taxa para um gráfico menos irregular
+    if len(rates) > 3:
+        smooth_rates = np.convolve(rates, np.ones(3)/3, mode='valid')
+    else:
+        smooth_rates = rates
+
+    ax.clear()  # Limpa o gráfico antes de desenhar novamente
+
+    ax.plot(timestamps[:len(smooth_rates)], smooth_rates, marker='o', color='#0DFF00')
+    ax.fill_between(timestamps[:len(smooth_rates)], smooth_rates, color='#0DFF00', alpha=0.1)
+
+    ax.set_title(f'{from_currency.get()} para {to_currency.get()} (tempo real)', color='white')
+    ax.set_xlabel('Tempo', color='white')
+    ax.set_ylabel('Taxa de Câmbio', color='white')
+    ax.grid(False)
+    ax.set_facecolor('#1a1a1a')
+    fig.patch.set_facecolor('#1a1a1a')
+    ax.tick_params(colors='white')
+    canvas.draw()
+
+def update_real_time_graph(base_currency='USD', target_currency='BRL'):
+    global update_timer
     data = update_exchange_rate(base_currency, target_currency)
     
     if data and f"{base_currency}{target_currency}" in data:
@@ -45,74 +65,55 @@ def update_real_time_graph(base_currency='USD'):
         rates.append(rate)
         timestamps.append(now)
 
+        # Exibindo o valor atual da taxa de câmbio
+        current_rate_label.configure(text=f"Valor Atual: {rate:.2f} {target_currency} - {now.strftime('%H:%M:%S')}")
+
+        # Plotando o gráfico
+        plot_graph()
+
+        # Cancelar timer anterior, se existir
+        if update_timer is not None:
+            app.after_cancel(update_timer)
+
+        # Atualizando o gráfico a cada minuto
+        update_timer = app.after(60000, lambda: update_real_time_graph(base_currency, target_currency))
+
+def show_month_graph(base_currency='USD', target_currency='BRL'):
+    url = f"https://economia.awesomeapi.com.br/json/daily/{base_currency}-{target_currency}/30"
+    response = requests.get(url)
+    data = response.json()
+    
+    if data:
+        month_rates = [float(entry['bid']) for entry in data]
+        month_dates = [datetime.datetime.fromtimestamp(int(entry['timestamp'])) for entry in data]
+
         ax.clear()
-        
-        # Suavização opcional dos dados da taxa para um gráfico menos irregular
-        if len(rates) > 3:
-            smooth_rates = np.convolve(rates, np.ones(3)/3, mode='valid')
-        else:
-            smooth_rates = rates
 
-        # Plotando a linha suavizada
-        ax.plot(timestamps[:len(smooth_rates)], smooth_rates, marker='o', color='#7FFF00')  # Cor verde-clara
-        ax.fill_between(timestamps[:len(smooth_rates)], smooth_rates, color='#7FFF00', alpha=0.1)  # Área sombreada
-        
-        # Definindo título e rótulos do gráfico
-        ax.set_title(f'{base_currency} to BRL (Real-Time)', color='white')
-        ax.set_xlabel('Tempo', color='white')
+        # Suavização dos dados mensais
+        smooth_month_rates = np.convolve(month_rates, np.ones(3)/3, mode='valid')
+
+        ax.plot(month_dates[:len(smooth_month_rates)], smooth_month_rates, marker='o', color='#E10C00')
+        ax.fill_between(month_dates[:len(smooth_month_rates)], smooth_month_rates, color='#E10C00', alpha=0.1)
+
+        ax.set_title(f'{base_currency} para {target_currency} (Variações Mensais)', color='white')
+        ax.set_xlabel('Dias', color='white')
         ax.set_ylabel('Taxa de Câmbio', color='white')
-        
-        # Removendo a grade para uma aparência mais limpa (opcional)
-        ax.grid(False)
 
-        # Tema escuro para o fundo do gráfico e da área de plotagem
-        fig.patch.set_facecolor('#1a1a1a')  # Fundo escuro da figura
-        ax.set_facecolor('#1a1a1a')  # Fundo escuro da área de plotagem
-        
-        # Cor branca para os ticks para melhor visibilidade
+        ax.grid(False)
+        ax.set_facecolor('#1a1a1a')
+        fig.patch.set_facecolor('#1a1a1a')
         ax.tick_params(colors='white')
 
-        # Exibindo o valor atual da taxa de câmbio
-        current_rate_label.configure(text=f"Valor Atual: {rate:.2f} {target_currency}")
-
-        # Redesenhando o gráfico atualizado
         canvas.draw()
-        
-        # Atualizando o gráfico a cada minuto
-        app.after(60000, lambda: update_real_time_graph(base_currency))
 
-def convert_currency():
-    try:
-        base_currency = from_currency.get()
-        target_currency = to_currency.get()
-        amount = float(entry_amount.get())
-        
-        if base_currency == target_currency:
-            result = amount
-        else:
-            data = update_exchange_rate(base_currency, target_currency)
-            if data and f"{base_currency}{target_currency}" in data:
-                rate = float(data[f"{base_currency}{target_currency}"]['bid'])
-                result = amount * rate
-            else:
-                messagebox.showerror("Erro", "Falha ao obter taxa de câmbio.")
-                return
-        
-        result_label.configure(text=f"{amount:.2f} {base_currency} = {result:.2f} {target_currency}")
-        update_real_time_graph(base_currency)
-
-    except ValueError:
-        messagebox.showerror("Erro", "Por favor, insira um valor válido.")
-
-# Criando a interface gráfica
 def create_gui():
-    global from_currency, to_currency, entry_amount, result_label, ax, canvas, current_rate_label, app, fig
+    global from_currency, to_currency, ax, canvas, current_rate_label, app, fig
     
     app = ctk.CTk()
-    app.title("Conversor de Moedas com Gráfico")
+    app.title("Gráfico de Câmbio em Tempo Real")
     app.geometry("800x600")
     
-    ctk.CTkLabel(app, text="Conversor de Moedas", font=("Arial", 24)).pack(pady=10)
+    ctk.CTkLabel(app, text="Gráfico de Câmbio", font=("Arial", 24)).pack(pady=10)
     
     frame = ctk.CTkFrame(app)
     frame.pack(pady=10)
@@ -126,16 +127,15 @@ def create_gui():
     to_currency.set("BRL")
     to_currency.grid(row=0, column=1, padx=10)
     
-    # Entrada de valor
-    entry_amount = ctk.CTkEntry(frame, placeholder_text="Valor")
-    entry_amount.grid(row=0, column=2, padx=10)
+    # Botões "ATUAL" e "MÊS"
+    button_frame = ctk.CTkFrame(app)
+    button_frame.pack(pady=10)
     
-    # Botão para converter
-    ctk.CTkButton(frame, text="Converter", command=convert_currency).grid(row=0, column=3, padx=10)
+    # Botão ATUAL
+    ctk.CTkButton(button_frame, text="ATUAL", command=lambda: update_real_time_graph(from_currency.get(), to_currency.get())).grid(row=0, column=0, padx=10)
     
-    # Label de resultado
-    result_label = ctk.CTkLabel(app, text="Resultado", font=("Arial", 18))
-    result_label.pack(pady=10)
+    # Botão MÊS
+    ctk.CTkButton(button_frame, text="MÊS", command=lambda: show_month_graph(from_currency.get(), to_currency.get())).grid(row=0, column=1, padx=10)
 
     # Gráfico Matplotlib
     fig, ax = plt.subplots()
