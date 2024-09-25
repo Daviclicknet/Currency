@@ -44,13 +44,13 @@ def plot_graph():
     ax.plot(timestamps[:len(smooth_rates)], smooth_rates, marker='o', color='#0DFF00')
     ax.fill_between(timestamps[:len(smooth_rates)], smooth_rates, color='#0DFF00', alpha=0.1)
 
-    ax.set_title(f'{from_currency.get()} para {to_currency.get()} (tempo real)', color='white')
-    ax.set_xlabel('Tempo', color='white')
-    ax.set_ylabel('Taxa de Câmbio', color='white')
+    ax.set_title(f'{from_currency.get()} para {to_currency.get()} (tempo real)', color='black')
+    ax.set_xlabel('Tempo', color='black')
+    ax.set_ylabel('Taxa de Câmbio', color='black')
     ax.grid(False)
-    ax.set_facecolor('#1a1a1a')
-    fig.patch.set_facecolor('#1a1a1a')
-    ax.tick_params(colors='white')
+    ax.set_facecolor('#ffffff')
+    fig.patch.set_facecolor('#ffffff')
+    ax.tick_params(colors='black')
     canvas.draw()
 
 def update_real_time_graph(base_currency='USD', target_currency='BRL'):
@@ -95,14 +95,14 @@ def show_month_graph(base_currency='USD', target_currency='BRL'):
         ax.plot(month_dates[:len(smooth_month_rates)], smooth_month_rates, marker='o', color='#E10C00')
         ax.fill_between(month_dates[:len(smooth_month_rates)], smooth_month_rates, color='#E10C00', alpha=0.1)
 
-        ax.set_title(f'{base_currency} para {target_currency} (Variações Mensais)', color='white')
-        ax.set_xlabel('Dias', color='white')
-        ax.set_ylabel('Taxa de Câmbio', color='white')
+        ax.set_title(f'{base_currency} para {target_currency} (Variações Mensais)', color='black')
+        ax.set_xlabel('Dias', color='black')
+        ax.set_ylabel('Taxa de Câmbio', color='black')
 
         ax.grid(False)
-        ax.set_facecolor('#1a1a1a')
-        fig.patch.set_facecolor('#1a1a1a')
-        ax.tick_params(colors='white')
+        ax.set_facecolor('#ffffff')
+        fig.patch.set_facecolor('#ffffff')
+        ax.tick_params(colors='black')
 
         canvas.draw()
 
