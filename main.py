@@ -75,8 +75,9 @@ def update_real_time_graph(base_currency='USD', target_currency='BRL'):
         if update_timer is not None:
             app.after_cancel(update_timer)
 
-        # Atualizando o gráfico a cada minuto
-        update_timer = app.after(60000, lambda: update_real_time_graph(base_currency, target_currency))
+        # Atualizando o gráfico a cada 30 minutos
+        update_timer = app.after(1800000, lambda: update_real_time_graph(base_currency, target_currency))
+
 
 def show_month_graph(base_currency='USD', target_currency='BRL'):
     url = f"https://economia.awesomeapi.com.br/json/daily/{base_currency}-{target_currency}/30"
