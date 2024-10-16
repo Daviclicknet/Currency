@@ -30,6 +30,7 @@ def update_exchange_rate(base_currency: str, target_currency: str) -> dict:
 # Variáveis para o gráfico em tempo real
 rates = []
 timestamps = []
+last_rate = None  # Armazena a última taxa de câmbio
 update_timer = None  # Para controlar o timer da atualização
 
 def plot_graph():
@@ -54,28 +55,34 @@ def plot_graph():
     canvas.draw()
 
 def update_real_time_graph(base_currency='USD', target_currency='BRL'):
-    global update_timer
+    global update_timer, last_rate
     data = update_exchange_rate(base_currency, target_currency)
     
     if data and f"{base_currency}{target_currency}" in data:
         rate = float(data[f"{base_currency}{target_currency}"]['bid'])
-        now = datetime.datetime.now()
+        
+        # Verifica se a taxa é diferente da última taxa
+        if last_rate is None or rate != last_rate:
+            now = datetime.datetime.now()
 
-        # Atualizando os dados do gráfico
-        rates.append(rate)
-        timestamps.append(now)
+            # Atualizando os dados do gráfico
+            rates.append(rate)
+            timestamps.append(now)
 
-        # Exibindo o valor atual da taxa de câmbio
-        current_rate_label.configure(text=f"Valor Atual: {rate:.2f} {target_currency} - {now.strftime('%H:%M:%S')}")
+            # Exibindo o valor atual da taxa de câmbio
+            current_rate_label.configure(text=f"Valor Atual: {rate:.2f} {target_currency} - {now.strftime('%H:%M:%S')}")
 
-        # Plotando o gráfico
-        plot_graph()
+            # Plotando o gráfico
+            plot_graph()
+
+            # Atualiza a última taxa
+            last_rate = rate
 
         # Cancelar timer anterior, se existir
         if update_timer is not None:
             app.after_cancel(update_timer)
 
-        # Atualizando o gráfico a cada 30 minutos
+        # Atualizando o gráfico a cada 30 minutos (1800000 milissegundos)
         update_timer = app.after(1800000, lambda: update_real_time_graph(base_currency, target_currency))
 
 
