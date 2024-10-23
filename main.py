@@ -120,7 +120,8 @@ def create_gui():
     app = ctk.CTk()
     app.title("Gráfico de Câmbio em Tempo Real")
     app.geometry("800x600")
-    
+    app.resizable(True, True)  # Permitir redimensionamento
+
     ctk.CTkLabel(app, text="Gráfico de Câmbio", font=("Arial", 24)).pack(pady=10)
     
     frame = ctk.CTkFrame(app)
@@ -145,19 +146,20 @@ def create_gui():
     # Botão MÊS
     ctk.CTkButton(button_frame, text="MÊS", command=lambda: show_month_graph(from_currency.get(), to_currency.get())).grid(row=0, column=1, padx=10)
 
+    # Label da taxa atual
+    current_rate_label = ctk.CTkLabel(app, text="Valor Atual: ---", font=("Arial", 14))
+    current_rate_label.pack(pady=10)  # Moved here, right after the buttons
+    
     # Gráfico Matplotlib
     fig, ax = plt.subplots()
     canvas = FigureCanvasTkAgg(fig, master=app)
     canvas.get_tk_widget().pack(fill='both', expand=True)
-    
-    # Label da taxa atual
-    current_rate_label = ctk.CTkLabel(app, text="Valor Atual: ---", font=("Arial", 14))
-    current_rate_label.pack(pady=10)
 
     # Inicializando o gráfico com valores padrão
     update_real_time_graph()
 
     app.mainloop()
+
 
 if __name__ == "__main__":
     create_gui()
