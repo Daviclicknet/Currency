@@ -54,8 +54,11 @@ def plot_graph():
     ax.tick_params(colors='black')
     canvas.draw()
 
-def update_real_time_graph(base_currency='USD', target_currency='BRL'):
+def update_real_time_graph(base_currency, target_currency):
     global update_timer, last_rate
+    if base_currency == "" or target_currency == "":
+        return  # Não atualiza se não houver moedas selecionadas
+
     data = update_exchange_rate(base_currency, target_currency)
     
     if data and f"{base_currency}{target_currency}" in data:
@@ -86,7 +89,10 @@ def update_real_time_graph(base_currency='USD', target_currency='BRL'):
         update_timer = app.after(1800000, lambda: update_real_time_graph(base_currency, target_currency))
 
 
-def show_month_graph(base_currency='USD', target_currency='BRL'):
+def show_month_graph(base_currency, target_currency):
+    if base_currency == "" or target_currency == "":
+        return  # Não mostra se não houver moedas selecionadas
+
     url = f"https://economia.awesomeapi.com.br/json/daily/{base_currency}-{target_currency}/30"
     response = requests.get(url)
     data = response.json()
@@ -156,9 +162,10 @@ def create_gui():
     canvas.get_tk_widget().pack(fill='both', expand=True)
 
     # Inicializando o gráfico com valores padrão
-    update_real_time_graph()
+    update_real_time_graph(from_currency.get(), to_currency.get())  # Pass currencies
 
     app.mainloop()
+
 
 
 if __name__ == "__main__":
